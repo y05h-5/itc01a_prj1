@@ -148,9 +148,11 @@ class DrawingPanel extends JPanel {
                 }
 
                 if (v+1 == nvert) break;
+
+                // src: https://stackoverflow.com/questions/3365171/calculating-the-angle-between-two-lines-without-having-to-calculate-the-slope
                 Point2D.Double next = points.get(v+offset+1);
-                double angle1 = Math.atan2(prev.y-cur.y, prev.x-cur.x);
-                double angle2 = Math.atan2(cur.y - next.y, cur.x - next.x);
+                double angle1 = Math.atan2(cur.y-prev.y, cur.x-prev.x);
+                double angle2 = Math.atan2(next.y-cur.y, next.x-cur.x);
                 double diff = angle2 - angle1;
                 System.out.printf("Curvature at point %d = %f\n", v, diff);
             }
