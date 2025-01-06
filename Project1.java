@@ -50,14 +50,16 @@ class DrawingPanel extends JPanel {
         int width = getWidth();
 
         AffineTransform t1 = new AffineTransform();
-        t1.translate(width/2, height/2);
-        t1.rotate(Math.PI);
+        t1.translate(width/2, height/2); // use width and height instead when on retina display??
+        t1.rotate(Math.PI); // since the rider vert file is somehow flipped??
         t1.scale(scalingfactor, scalingfactor);
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // parse the vert file & create paths
         parsePoints();
         makeLines();
+
         g2d.setTransform(t1);
         g2d.setStroke(new BasicStroke(2/scalingfactor));
 
@@ -83,6 +85,7 @@ class DrawingPanel extends JPanel {
         return new Point2D.Double(-tangent.y, tangent.x); // from the definition in the lecture slide
     }
 
+    // used for drawing tangent and normal vectors
     private void getVectorPath(Path2D.Double path, Point2D.Double start, Point2D.Double vector) {
         path.moveTo(start.x, start.y);
         path.lineTo(start.x + vector.x, start.y + vector.y);
@@ -133,7 +136,6 @@ class DrawingPanel extends JPanel {
                     cur.y + vtan.y * magT
                 );
 
-                // create the curved section
                 lines.quadTo(ctl.x, ctl.y, cur.x, cur.y);
 
                 // get tangent & normal vectors for every 20 points
