@@ -8,9 +8,7 @@ import java.nio.file.*;
 public class Project1 {
     public static void main(String[] args) {
         JFrame jf = new JFrame("Project 1");
-        DrawingPanel dp = (args.length > 1)?
-            new DrawingPanel(args[0]) :
-            new DrawingPanel("vert/riderr.vert");
+        DrawingPanel dp = new DrawingPanel("vert/riderr.vert");
 
         jf.add(dp);
         jf.setSize(800,600);
@@ -24,24 +22,23 @@ class DrawingPanel extends JPanel {
     private Scanner input;
     private int nComponent;
     private ArrayList<Integer> nVertex;
-    private ArrayList<Line2D.Double> lines;
-    private Path2D.Double bezier;
-    private Path2D.Double quad;
+    private Path2D.Double lines;
+    private Path2D.Double tangents;
+    private Path2D.Double normals;
     private float scalingfactor;
+    private ArrayList<Point2D.Double> points;
 
-    public DrawingPanel (String fname) {
+    public DrawingPanel(String fname) {
         Path fp = Paths.get(fname);
         try {
             input = new Scanner(fp);
         } catch (Exception e) {
             System.err.println("Scanner creation failed");
         }
+
         nComponent = input.nextInt();
         nVertex = new ArrayList<Integer>();
-        lines = new ArrayList<Line2D.Double>();
-        bezier = new Path2D.Double();
-        quad = new Path2D.Double();
-        scalingfactor = 40.0f;
+        scalingfactor = 20.0f;
     }
 
     @Override
@@ -53,95 +50,100 @@ class DrawingPanel extends JPanel {
         int width = getWidth();
 
         AffineTransform t1 = new AffineTransform();
-        t1.translate(width, height);
+        t1.translate(width/2, height/2);
         t1.rotate(Math.PI);
-        t1.scale(scalingfactor,scalingfactor);
+        t1.scale(scalingfactor, scalingfactor);
 
-        parseLinesQuad();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        parsePoints();
+        makeLines();
         g2d.setTransform(t1);
-        g2d.setStroke(new BasicStroke((4/scalingfactor))); // compensate for the scaling
-        drawLinesBezier(g2d);
+        g2d.setStroke(new BasicStroke(2/scalingfactor));
+
+        // draw main shape
+        g2d.setColor(Color.BLACK);
+        g2d.draw(lines);
+        // drwa tangents
+        g2d.setColor(Color.RED);
+        g2d.draw(tangents);
+        // draw normals
+        g2d.setColor(Color.BLUE);
+        g2d.draw(normals);
     }
 
-    private void parseLinesQuad() {
+    private Point2D.Double getUnitTangent(Point2D.Double p1, Point2D.Double p2) {
+        double dx = p2.x - p1.x;
+        double dy = p2.y - p1.y;
+        double mag = Math.sqrt(dx*dx + dy*dy);
+        return new Point2D.Double(dx/mag, dy/mag);
+    }
+
+    private Point2D.Double getUnitNormal(Point2D.Double tangent) {
+        return new Point2D.Double(-tangent.y, tangent.x); // from the definition in the lecture slide
+    }
+
+    private void getVectorPath(Path2D.Double path, Point2D.Double start, Point2D.Double vector) {
+        path.moveTo(start.x, start.y);
+        path.lineTo(start.x + vector.x, start.y + vector.y);
+    }
+
+    private void parsePoints() {
+        points = new ArrayList<Point2D.Double>();
+
         for (int c = 0; c < nComponent; ++c) {
-            nVertex.add(input.nextInt());
-            Double x0 = input.nextDouble();
-            Double y0 = input.nextDouble();
-            Double prevX = x0, prevY = y0;
-            bezier.moveTo(x0, y0);
+            int vcnt = input.nextInt();
+            nVertex.add(vcnt);
 
-            Double x, y;
-            for (int v = 1; v < nVertex.get(c); ++v/*v += 2*/) {
-                x = input.nextDouble();
-                y = input.nextDouble();
-                bezier.quadTo(prevX, prevY, x, y);
-                prevX = x;
-                prevY = y;
+            for (int v = 0; v < vcnt; ++v) {
+                double x = input.nextDouble();
+                double y = input.nextDouble();
+                points.add(new Point2D.Double(x, y));
             }
-            bezier.closePath();
-        }
-    }
-
-    private void parseLinesBezier() {
-        for (int c = 0; c < nComponent; ++c) {
-            nVertex.add(input.nextInt());
-            Double x0 = input.nextDouble();
-            Double y0 = input.nextDouble();
-            Double prevX = x0, prevY = y0;
-            bezier.moveTo(x0, y0);
-
-            for (int v = 1; v < nVertex.get(c); ++v/*v += 2*/) {
-                Double x1, y1, x2, y2;
-                if (v+2 < nVertex.get(c)) {
-                    x1 = input.nextDouble();
-                    y1 = input.nextDouble();
-                    x2 = input.nextDouble();
-                    y2 = input.nextDouble();
-                    bezier.curveTo(prevX, prevY, x1, y1, x2, y2);
-                    prevX = x2;
-                    prevY = y2;
-                }
-                else {
-                    x1 = input.nextDouble();
-                    y1 = input.nextDouble();
-                    bezier.lineTo(x1, y1);
-                    break;
-                }
-            }
-            bezier.closePath();
-        }
-        input.close();
-    }
-    private void drawLinesBezier(Graphics2D g2d) {
-        g2d.draw(bezier);
-    }
-    private void parseLines() {
-        for (int c = 0; c < nComponent; ++c) {
-            nVertex.add(input.nextInt());
-            // System.out.println(nVertex.get(c)); // debug message
-            Double x0 = input.nextDouble();
-            Double y0 = input.nextDouble();
-            Double prevX = x0, prevY = y0;
-
-            for (int v = 1; v < nVertex.get(c); ++v) {
-                Double x = input.nextDouble();
-                Double y = input.nextDouble();
-                lines.add(new Line2D.Double(prevX, prevY, x, y));
-                prevX = x;
-                prevY = y;
-            }
-            lines.add(new Line2D.Double(prevX, prevY, x0, y0));
         }
         input.close();
     }
 
-    private void drawLines(Graphics2D g2d) {
-        int offset = 0;
-        for (int c = 0; c < nComponent; ++c) {
-            for (int v = offset; v < nVertex.get(c)+offset; ++v)
-                g2d.draw(lines.get(v));
-            offset += nVertex.get(c);
+    private void makeLines() {
+        lines = new Path2D.Double();
+        tangents = new Path2D.Double();
+        normals = new Path2D.Double();
+
+        for (int c = 0, offset = 0; c < nComponent; ++c) {
+            int nvert = nVertex.get(c);
+            Point2D.Double start = points.get(offset);
+            lines.moveTo(start.x, start.y);
+
+            for (int v = 1; v < nvert; ++v) {
+                Point2D.Double cur = points.get(v+offset);
+                Point2D.Double prev = points.get(v+offset-1);
+
+                Point2D.Double vtan = getUnitTangent(prev, cur); // get tangents
+                Point2D.Double vnorm = getUnitNormal(vtan); // get normals
+
+                // contrlo points
+                double magT = 0.05;
+                // double magN = 0.05;
+                // Point2D.Double ctl = new Point2D.Double(
+                //     (cur.x+prev.x)/2 - vtan.x * magT + vnorm.x * magN,
+                //     (cur.y+prev.y)/2 - vtan.y * magT + vnorm.y * magN
+                // );
+                Point2D.Double ctl = new Point2D.Double(
+                    cur.x + vtan.x * magT,
+                    cur.y + vtan.y * magT
+                );
+
+                // create the curved section
+                lines.quadTo(ctl.x, ctl.y, cur.x, cur.y);
+
+                // get tangent & normal vectors for every 20 points
+                if ((v-1)%20 == 0) {
+                    getVectorPath(tangents, prev, vtan); // create unit tangents
+                    getVectorPath(normals, prev, vnorm); // create unit normals
+                }
+            }
+            lines.closePath();
+            offset += nvert;
         }
     }
 }
