@@ -5,6 +5,16 @@ import java.util.ArrayList;
 import javax.swing.*;
 import java.nio.file.*;
 
+class Curvature {
+    Point2D.Double position;
+    double curvature;
+
+    Curvature(Point2D.Double pos, double curv) {
+        this.position = pos;
+        this.curvature = curv;
+    }
+}
+
 public class Project1 {
     public static void main(String[] args) {
         JFrame jf = new JFrame("Project 1");
@@ -132,8 +142,8 @@ class DrawingPanel extends JPanel {
                 //     (cur.y+prev.y)/2 - vtan.y * magT + vnorm.y * magN
                 // );
                 Point2D.Double ctl = new Point2D.Double(
-                    cur.x + vtan.x * magT,
-                    cur.y + vtan.y * magT
+                    prev.x + vtan.x * magT,
+                    prev.y + vtan.y * magT
                 );
 
                 lines.quadTo(ctl.x, ctl.y, cur.x, cur.y);
