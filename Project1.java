@@ -39,7 +39,7 @@ class DrawingPanel extends JPanel {
 
         nComponent = input.nextInt();
         nVertex = new ArrayList<Integer>();
-        scalingfactor = 40.0f;
+        scalingfactor = 20.0f;
     }
 
     @Override
@@ -51,8 +51,8 @@ class DrawingPanel extends JPanel {
         int width = getWidth();
 
         AffineTransform t1 = new AffineTransform();
-        // t1.translate(width/2, height/2); // use width and height instead when on retina display??
-        t1.translate(width, height); // use width and height instead when on retina display??
+        t1.translate(width/2, height/2); // use width and height instead when on retina display??
+        // t1.translate(width, height); // use width and height instead when on retina display??
         t1.rotate(Math.PI); // since the rider vert file is somehow flipped??
         t1.scale(scalingfactor, scalingfactor);
 
@@ -146,6 +146,13 @@ class DrawingPanel extends JPanel {
                     getVectorPath(tangents, prev, vtan); // create unit tangents
                     getVectorPath(normals, prev, vnorm); // create unit normals
                 }
+
+                if (v+1 == nvert) break;
+                Point2D.Double next = points.get(v+offset+1);
+                double angle1 = Math.atan2(prev.y-cur.y, prev.x-cur.x);
+                double angle2 = Math.atan2(cur.y - next.y, cur.x - next.x);
+                double diff = angle2 - angle1;
+                System.out.printf("Curvature at point %d = %f\n", v, diff);
             }
             lines.closePath();
             offset += nvert;
