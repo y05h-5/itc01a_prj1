@@ -5,20 +5,10 @@ import java.util.ArrayList;
 import javax.swing.*;
 import java.nio.file.*;
 
-class Curvature {
-    Point2D.Double position;
-    double curvature;
-
-    Curvature(Point2D.Double pos, double curv) {
-        this.position = pos;
-        this.curvature = curv;
-    }
-}
-
 public class Project1 {
     public static void main(String[] args) {
         JFrame jf = new JFrame("Project 1");
-        DrawingPanel dp = new DrawingPanel("vert/riderr.vert");
+        DrawingPanel dp = (args.length >= 1)? new DrawingPanel(args[0]) : new DrawingPanel("vert/riderr.vert");
 
         jf.add(dp);
         jf.setSize(800,600);
@@ -37,6 +27,7 @@ class DrawingPanel extends JPanel {
     private Path2D.Double normals;
     private float scalingfactor;
     private ArrayList<Point2D.Double> points;
+    private ArrayList<Curvature> curvature;
 
     public DrawingPanel(String fname) {
         Path fp = Paths.get(fname);
@@ -48,7 +39,7 @@ class DrawingPanel extends JPanel {
 
         nComponent = input.nextInt();
         nVertex = new ArrayList<Integer>();
-        scalingfactor = 20.0f;
+        scalingfactor = 40.0f;
     }
 
     @Override
@@ -60,7 +51,8 @@ class DrawingPanel extends JPanel {
         int width = getWidth();
 
         AffineTransform t1 = new AffineTransform();
-        t1.translate(width/2, height/2); // use width and height instead when on retina display??
+        // t1.translate(width/2, height/2); // use width and height instead when on retina display??
+        t1.translate(width, height); // use width and height instead when on retina display??
         t1.rotate(Math.PI); // since the rider vert file is somehow flipped??
         t1.scale(scalingfactor, scalingfactor);
 
@@ -96,6 +88,7 @@ class DrawingPanel extends JPanel {
     }
 
     // used for drawing tangent and normal vectors
+    // Claude helped me to implement this part
     private void getVectorPath(Path2D.Double path, Point2D.Double start, Point2D.Double vector) {
         path.moveTo(start.x, start.y);
         path.lineTo(start.x + vector.x, start.y + vector.y);
@@ -149,7 +142,7 @@ class DrawingPanel extends JPanel {
                 lines.quadTo(ctl.x, ctl.y, cur.x, cur.y);
 
                 // get tangent & normal vectors for every 20 points
-                if ((v-1)%20 == 0) {
+                if ((v-1)%20 == 0) { // idea of this was suggested by ChatGPT
                     getVectorPath(tangents, prev, vtan); // create unit tangents
                     getVectorPath(normals, prev, vnorm); // create unit normals
                 }
@@ -157,5 +150,15 @@ class DrawingPanel extends JPanel {
             lines.closePath();
             offset += nvert;
         }
+    }
+}
+
+class Curvature {
+    Point2D.Double position;
+    double curvature;
+
+    Curvature(Point2D.Double pos, double curv) {
+        this.position = pos;
+        this.curvature = curv;
     }
 }
